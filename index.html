@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seguimiento Diario VACs — MINSAIT</title>
+<style>
+  :root {
+    --borgona: #4F062A;
+    --rojo: #FF0054;
+    --arena: #E3E2DA;
+    --topo: #D0CEC1;
+    --carbon: #2D2D2D;
+    --blanco-roto: #F2F2F2;
+    --gris: #D9D9D9;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Calibri, Arial, sans-serif;
+    background: var(--arena);
+    color: var(--carbon);
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--borgona);
+    color: white;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .header h1 {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .header .brand {
+    font-size: 12px;
+    opacity: 0.8;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    gap: 6px;
+    padding: 16px 32px 0;
+    flex-wrap: wrap;
+  }
+  .tab {
+    padding: 8px 18px;
+    border-radius: 6px 6px 0 0;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    background: var(--topo);
+    color: var(--carbon);
+    border: none;
+    transition: background 0.2s;
+  }
+  .tab:hover { background: var(--gris); }
+  .tab.active {
+    background: white;
+    color: var(--borgona);
+    font-weight: 700;
+    box-shadow: 0 -2px 0 var(--rojo) inset;
+  }
+
+  /* CONTENIDO */
+  .content {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 24px 32px 48px;
+  }
+  .card {
+    background: white;
+    border-radius: 8px;
+    padding: 28px 32px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--arena);
+  }
+  .card-header .fecha {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--borgona);
+  }
+  .card-header .periodo {
+    font-size: 13px;
+    color: #888;
+  }
+
+  /* SEGUIMIENTO RENDERIZADO */
+  .seguimiento h3 {
+    color: var(--borgona);
+    font-size: 16px;
+    font-weight: 700;
+    margin: 24px 0 10px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--rojo);
+    display: inline-block;
+  }
+  .seguimiento h3:first-child { margin-top: 0; }
+  .seguimiento ul {
+    margin: 6px 0 6px 20px;
+    line-height: 1.7;
+  }
+  .seguimiento li { margin-bottom: 4px; }
+  .seguimiento li ul { margin-top: 4px; }
+  .seguimiento p { margin: 8px 0; line-height: 1.6; }
+  .seguimiento strong { color: var(--borgona); }
+
+  /* TOOLBAR */
+  .toolbar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .btn {
+    padding: 7px 16px;
+    border: 1px solid var(--gris);
+    border-radius: 5px;
+    background: white;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--carbon);
+    transition: all 0.2s;
+  }
+  .btn:hover { border-color: var(--borgona); color: var(--borgona); }
+  .btn.success { background: #e8f5e9; border-color: #81c784; color: #2e7d32; }
+
+  /* EMPTY STATE */
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
+    font-size: 15px;
+  }
+
+  /* FOOTER */
+  .footer {
+    text-align: center;
+    padding: 16px;
+    font-size: 11px;
+    color: #999;
+  }
+
+  /* PRINT */
+  @media print {
+    .header { padding: 10px 20px; }
+    .tabs, .toolbar { display: none; }
+    .content { padding: 10px; }
+    .card { box-shadow: none; border: 1px solid var(--gris); }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Seguimiento Diario VACs</h1>
+  <span class="brand">MINSAIT &bull; Oficina de Calidad</span>
+</div>
+
+<div class="tabs" id="tabs"></div>
+
+<div class="content" id="content">
+  <div class="empty">No hay datos en el histórico.</div>
+</div>
+
+<div class="footer">MINSAIT &bull; MBC Visados &bull; Generado automáticamente con Claude Code</div>
+
+<script>
+// ============================================================
+// DATOS EMBEBIDOS (se reemplazan en cada generación)
+// ============================================================
+const HISTORICO = [{"fecha": "2026-03-30", "periodo": "27/03/2026 - 29/03/2026", "excel": "Seguimiento_20260327_20260329.xlsx", "timestamp": "2026-03-30T16:12:08.679642", "seguimiento": "Error: Reached max turns (5)"}];
+
+// ============================================================
+// MARKDOWN SIMPLE → HTML
+// ============================================================
+function md2html(md) {
+  if (!md) return '<p class="empty">Sin contenido</p>';
+
+  let html = md
+    // Escapar HTML
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    // Negrita
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    // Encabezados de región
+    .replace(/^### (.+)$/gm, '</ul><h3>$1</h3>')
+    .replace(/^## (.+)$/gm, '</ul><h2>$1</h2>')
+    // Bullets con sub-bullets
+    .replace(/^  - (.+)$/gm, '<li class="sub">$1</li>')
+    .replace(/^- (.+)$/gm, '</ul><ul><li>$1</li>')
+    // Párrafos
+    .replace(/\n\n/g, '</ul><p></p>')
+    .replace(/\n/g, ' ');
+
+  // Limpiar ul vacíos
+  html = html.replace(/<\/ul>\s*<ul>/g, '');
+  html = html.replace(/^<\/ul>/, '');
+  if (!html.endsWith('</ul>')) html += '</ul>';
+  html = html.replace(/<ul>\s*<\/ul>/g, '');
+
+  return html;
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+let currentIdx = 0;
+
+function renderTabs() {
+  const tabsEl = document.getElementById('tabs');
+  if (HISTORICO.length === 0) { tabsEl.innerHTML = ''; return; }
+
+  // Orden: más reciente primero
+  const sorted = [...HISTORICO].reverse();
+
+  tabsEl.innerHTML = sorted.map((entry, i) => {
+    const d = entry.fecha || '?';
+    // Formato bonito: "Lun 28/03"
+    const parts = d.split('-');
+    let label = d;
+    if (parts.length === 3) {
+      const dt = new Date(parts[0], parts[1]-1, parts[2]);
+      const dias = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+      label = dias[dt.getDay()] + ' ' + parts[2] + '/' + parts[1];
+    }
+    const active = i === currentIdx ? 'active' : '';
+    return '<button class="tab ' + active + '" onclick="selectTab(' + i + ')">' + label + '</button>';
+  }).join('');
+}
+
+function renderContent() {
+  const el = document.getElementById('content');
+  if (HISTORICO.length === 0) {
+    el.innerHTML = '<div class="empty">No hay seguimientos en el histórico.<br>Ejecuta el orquestador para generar el primero.</div>';
+    return;
+  }
+
+  const sorted = [...HISTORICO].reverse();
+  const entry = sorted[currentIdx];
+
+  const texto = entry.seguimiento || entry.contenido_raw || 'Sin contenido';
+
+  el.innerHTML = ''
+    + '<div class="toolbar">'
+    + '  <button class="btn" onclick="copiarTexto()" id="btnCopiar">&#128203; Copiar para email</button>'
+    + '  <button class="btn" onclick="window.print()">&#128424; Imprimir</button>'
+    + '  <span style="flex:1"></span>'
+    + '  <span style="font-size:11px;color:#999">Excel: ' + (entry.excel || '?') + '</span>'
+    + '</div>'
+    + '<div class="card">'
+    + '  <div class="card-header">'
+    + '    <span class="fecha">Seguimiento ' + (entry.fecha || '?') + '</span>'
+    + '    <span class="periodo">Periodo: ' + (entry.periodo || '?') + '</span>'
+    + '  </div>'
+    + '  <div class="seguimiento" id="seguimientoBody">' + md2html(texto) + '</div>'
+    + '</div>';
+}
+
+function selectTab(idx) {
+  currentIdx = idx;
+  renderTabs();
+  renderContent();
+}
+
+function copiarTexto() {
+  const sorted = [...HISTORICO].reverse();
+  const entry = sorted[currentIdx];
+  const texto = entry.seguimiento || entry.contenido_raw || '';
+
+  // Copiar texto plano (markdown) al portapapeles
+  navigator.clipboard.writeText(texto).then(() => {
+    const btn = document.getElementById('btnCopiar');
+    btn.classList.add('success');
+    btn.innerHTML = '&#10003; Copiado';
+    setTimeout(() => {
+      btn.classList.remove('success');
+      btn.innerHTML = '&#128203; Copiar para email';
+    }, 2000);
+  }).catch(() => {
+    // Fallback para navegadores sin clipboard API
+    const ta = document.createElement('textarea');
+    ta.value = texto;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  });
+}
+
+// INIT
+renderTabs();
+renderContent();
+</script>
+</body>
+</html>
